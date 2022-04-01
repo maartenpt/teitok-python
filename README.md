@@ -1,0 +1,1 @@
+This is a Python3 package to work with TEITOK files for NLP purposes.
