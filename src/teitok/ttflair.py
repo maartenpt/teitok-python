@@ -2,57 +2,19 @@ import lxml.etree as etree
 import flair
 from flair.data import Sentence
 
-def readsent(xmlf, sentid=""):
+def obj2sent(obj):
 	sentence = Sentence() 
-	if sentid:
-		sentence.add_label("sentid", sentid )
-		tokxp = "//s[@id=\""+sentid+"\"]//tok"
-	else:
-		tokxp = "//tok"
-
 	tokcnt = 0
-	for tok in xmlf.findall(tokxp):
-		if "form" in tok.keys():
-			form = tok.attrib["form"]
-		else:
-			form = tok.text
-		sentence.add_token(form)
-		for attr in tok.items():
-			sentence[tokcnt].add_tag(attr[0], attr[1])
+	for tok in obj['tokens']:
+		for attr in tok.keys():
+			val = tok[attr]
+			if attr == "word":
+				sentence.add_token(val)
+			else:
+				sentence[tokcnt].add_tag(attr, val)
 		tokcnt = tokcnt + 1
-
 	return sentence
 
-def readsents(xmlf):
-	sentences = {}
-	for sent in xmlf.findall("//s"):
-		sentid = sent.attrib['id']
-		sentence = readsent(xmlf, sentid)
-		sentences[sentid] = sentence
-	return sentences
-
-def toconllu(sentence):
-	sentid = "|".join(x.value for x in sentence.get_labels('sentid'))
-	flds = "ord,form,lemma,upos,xpos,feats,ohead,deprel,deps,misc".split(",")
-	print("# sent_id = " + sentid)
-	print("# text = " + sentence.to_plain_string())
-	ord = 1
-	for token in sentence:
-		d = {}
-		tokid = token.get_tag('id').value
-		form = token.text
-		miscs = ["tokId="+tokid]
-		if token.get_tag('ner') and token.get_tag('ner').value != "":
-			miscs.append(token.get_tag('ner').value)
-		for fld in flds:
-			val = token.get_tag(fld).value
-			if val == "":
-				val = "_"
-			d[fld] = val
-		misc = "|".join(miscs)
-		print(ord,form,d['lemma'],d['upos'],d['xpos'],d['feats'],d['ohead'],d['deprel'],d['deps'],misc,sep="\t")
-		ord = ord+1
-	print("")
 
 def writeback(xmlf, sentences, attrs = ""):
 	toklist = {}
